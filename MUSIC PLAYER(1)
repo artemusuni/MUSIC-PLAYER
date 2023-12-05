@@ -1,0 +1,100 @@
+from tkinter import filedialog;               #NOT DONE YET
+from tkinter import *;   #importing needed libraries
+import pygame;
+import os;
+
+root = Tk();
+root.title("MUSIC PLAYER")     #title
+root.geometry("500x350");       #window side
+
+pygame.mixer.init();  #allows to run music
+
+#CREATING MENU-BAR
+menu_bar = Menu(root);        #ADDING TO THE ROOT
+root.config(menu=menu_bar);
+
+organise_menu_bar = Menu(menu_bar, tearoff=False);      #INITIALIZING   #tearoff removes the extra button on the menu
+organise_menu_bar.add_command(label="Select Folder", command=lambda:music());
+
+menu_bar.add_cascade(label="Organise", menu=organise_menu_bar);  #WILL BE ABLE TO SEE
+#CREATING LISTBOX 
+listbox = Listbox(root, bg="black", fg="white", width=100, height=15);
+listbox.grid(row=0);
+
+#ADDING FRAME
+frame = Frame(root);
+frame.grid(row=1);
+#PAUSE BUTTON
+pause_button = Button(frame, text="||", bg="black", fg="white", padx=10, borderwidth=10, command=lambda:pause_music());
+pause_button.grid(row=0, column=1);
+
+#PLAY BUTTON
+play_button = Button(frame, text="PLAY", bg="black", fg="white", borderwidth=10, command=lambda:play_music());
+play_button.grid(row=0, column=2);
+
+#SKIP INFRONT BUTTON
+next_button = Button(frame, text=">>", bg="black", fg="white", borderwidth=10, command=lambda:next_music());
+next_button.grid(row=0, column=3);
+#SKIP BACK BUTTON
+back_button = Button(frame, text="<<", bg="black", fg="white", borderwidth=10, command=lambda:prev_music());
+back_button.grid(row=0, column=0);
+
+#ADDING LISTS
+songs = [];
+current_song = "";
+paused = False;
+
+#ADDING FUNCTION
+def music():
+    global current_song;                    #CURRENT SONG SHOULD BE GLOBAl
+    root.directory = filedialog.askdirectory();  #ALLOWS TO CHOOSE A FILE THROUGH A WINDOW
+    for song in os.listdir(root.directory):       #LISTS ALL THE FILES AND FOLDERS IN THAT DIRECTORY
+        name, ext = os.path.splitext(song);        #SPLITS THE FILENAME INTO NAME AND THE EXTENTION
+        if ext == ".mp3":                           #IF THE EXTENTION IS MP3 it appends it to the array
+            songs.append(song);
+    for song in songs:                               #APPENDS THE SONG TO THE LISTBOX
+        listbox.insert("end", song);
+
+    listbox.selection_set(0);                     #WILL SELECT THE FIRST SONG FROM THE TOP OF THE LIST           
+    current_song = song[listbox.curselection()[0]];        #CURRENT SONG WILL BE SELECTED FROM THE LISTBOX
+
+def play_music():
+    global current_song, paused;
+
+    if not paused:
+        pygame.mixer.music.load(os.path.join(root.directory, current_song));      #JOINS THE DIRECTORY WITH THE CURRENT SONG 
+        pygame.mixer.music.play();
+    else:
+        pygame.mixer.music.unpause();
+        paused = False;
+
+def pause_music():
+    global paused;
+    pygame.mixer.music.paused();      #PAUSES MUSIC
+    paused = True;
+
+def next_music():
+    global current_song, paused;
+
+    try:      # ADDING TRY AND EXEPT, BECAUSE OF THE LAST SONG. THERE IS NO NEXT SO WILL THROW AN ERROR
+        listbox.selection_clear(0, END);
+        listbox.selection_set(songs.index(current_song) + 1);     #MOVES TO THE NEXT SONGS INDEX
+        current_song = songs[listbox.curselection()[0]];
+        play_music();
+    except:
+        pass;    #IF IT BREAKS IT WILL JUST NOT RUN THE FUNCTION
+
+def prev_music():
+    global current_song, paused;
+
+    try:
+        listbox.select_clear(0, END);
+        listbox.select_set(songs.index(current_song) - 1)
+        current_song = songs[listbox.curselection()[0]];
+        play_music();
+    except:
+        pass;
+
+
+
+root.mainloop();
